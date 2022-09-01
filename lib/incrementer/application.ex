@@ -18,7 +18,8 @@ defmodule Incrementer.Application do
       IncrementerWeb.Endpoint,
       # Start a worker by calling: Incrementer.Worker.start_link(arg)
       # {Incrementer.Worker, arg}
-      Incrementer.Increment
+      Incrementer,
+      {Incrementer.DBWorker, send_to: Incrementer}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

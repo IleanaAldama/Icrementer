@@ -1,44 +1,36 @@
 defmodule Incrementer.Increment do
-  use GenServer
-  @table :increment_table
+  use Ecto.Schema
+  import Ecto.Changeset
 
-  def start_link(options) do
-    GenServer.start_link(__MODULE__, options, name: __MODULE__)
+  @primary_key {:key, :string, []}
+
+  schema "increments" do
+    field :value, :float
   end
 
-  @impl true
-  def init(_opts) do
-    :ets.new(@table, [:set, :private, :named_table])
-    {:ok, @table}
+  @doc false
+  def changeset(increment, attrs) do
+    increment
+    |> cast(attrs, [:key, :value])
+    |> validate_required([:key, :value])
+    |> unique_constraint([:key])
   end
 
-  def increment(key, value) do
-    GenServer.call(__MODULE__, {:increment, key, value})
-  end
+  def validate(params) do
+    %__MODULE__{}
+    |> cast(params, [:key, :value])
+    |> validate_required([:key, :value])
+    |> case do
+      %{valid?: true} = changeset ->
+        apply_changes(changeset)
 
-  def lookup(key) do
-    GenServer.call(__MODULE__, {:lookup, key})
-  end
-
-  @impl true
-  def handle_call({:lookup, key}, _from, state) do
-    {:reply, value(key), state}
-  end
-
-  @impl true
-  def handle_call({:increment, key, value}, _from, state) do
-    new_value = value(key) + value
-
-    response =
-      if :ets.insert(@table, {key, new_value}), do: :ok, else: {:error, "failed to increment"}
-
-    {:reply, response, state}
-  end
-
-  defp value(key) do
-    case :ets.lookup(@table, key) do
-      [] -> 0
-      [{_key, value}] -> value
+      changeset ->
+        changeset
     end
+  end
+
+  def from_list(values) do
+    values
+    |> Enum.map(fn {k, v} -> %{key: k, value: v} end)
   end
 end

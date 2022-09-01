@@ -8,7 +8,7 @@ defmodule IncrementerWeb.Router do
   scope "/", IncrementerWeb do
     pipe_through :api
 
-    post "increment", IncrementController, :increment
+    post "/increment", IncrementController, :increment
   end
 
   # Enables LiveDashboard only for development
