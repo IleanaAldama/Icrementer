@@ -1,24 +1,23 @@
 defmodule IncrementerWeb.IncrementController do
   use IncrementerWeb, :controller
   alias Incrementer.Increment
+  alias Incrementer.IncrementParams, as: Params
+  alias JaSerializer.EctoErrorSerializer
 
-  def increment(conn, %{"key" => key, "value" => value}) do
-    case Incrementer.increment(key, value) do
-      :ok ->
-        conn
-        |> put_status(202)
-        |> halt()
-
+  def increment(conn, params) do
+    with %{key: key, value: value} <- Params.validate(params),
+         :ok <- Increment.increment(key, value) do
+      send_resp(conn, 202, "")
+    else
       {:error, reason} ->
         conn
         |> put_status(400)
-        |> json(%{error: reason})
-    end
-  end
+        |> json(%{errors: [reason]})
 
-  def increment(conn, _params) do
-    conn
-    |> put_status(400)
-    |> json(%{error: "Invalid params; key and value required"})
+      %{valid?: false, errors: errors} ->
+        conn
+        |> put_status(400)
+        |> json(EctoErrorSerializer.format(errors))
+    end
   end
 end

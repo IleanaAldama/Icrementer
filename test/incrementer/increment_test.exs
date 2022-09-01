@@ -4,13 +4,13 @@ defmodule Incrementer.IncrementTest do
 
   describe "increment module" do
     test "should increment a new key and value" do
-      assert Increment.increment(:key, 2) == true
+      assert Increment.increment(:key, 2) == :ok
       assert Increment.lookup(:key) == 2
     end
 
     test "should increment an exisiteing key" do
-      assert Increment.increment(:key2, 2) == true
-      assert Increment.increment(:key2, 6) == true
+      assert Increment.increment(:key2, 2) == :ok
+      assert Increment.increment(:key2, 6) == :ok
       assert Increment.lookup(:key2) == 8
     end
 
