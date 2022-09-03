@@ -10,7 +10,6 @@ defmodule Incrementer do
   use GenServer
   require Logger
   @table :increment_table
-  @sync_interval 9_000
 
   def start_link(options) do
     GenServer.start_link(__MODULE__, options, name: __MODULE__)
@@ -19,12 +18,12 @@ defmodule Incrementer do
   @impl true
   def init(_opts) do
     init_ets()
-    schedule_db_sync()
     {:ok, [sync_needed: false]}
   end
 
   def increment(key, value) do
-    GenServer.call(__MODULE__, {:increment, key, value})
+    GenServer.cast(__MODULE__, {:increment, key, value})
+    :ok
   end
 
   def lookup(key) do
@@ -37,41 +36,20 @@ defmodule Incrementer do
   end
 
   @impl true
-  def handle_call({:increment, key, value}, _from, state) do
+  def handle_cast({:increment, key, value}, state) do
     new_value = value(key) + value
 
-    response =
-      if :ets.insert(@table, {key, new_value}), do: :ok, else: {:error, "failed to increment"}
+    :ets.insert(@table, {key, new_value})
+    DBWorker.enqueue({key, new_value})
 
-    state = Keyword.put(state, :sync_needed, true)
-    {:reply, response, state}
+    {:noreply, state}
   end
 
   @impl true
   def handle_cast({:sync_db_done, result}, state) do
     Logger.info("Sync done", result: inspect(result))
-    state = Keyword.put(state, :sync_needed, false)
     {:noreply, state}
   end
-
-  @impl true
-  def handle_info(:db_sync, [sync_needed: true] = state) do
-    Logger.info("Syncing")
-
-    @table
-    |> :ets.tab2list()
-    |> DBWorker.sync()
-
-    schedule_db_sync()
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_info(:db_sync, state) do
-    schedule_db_sync()
-    {:noreply, state}
-  end
-
 
   defp value(key) do
     case :ets.lookup(@table, key) do
@@ -89,10 +67,5 @@ defmodule Incrementer do
       |> Enum.map(fn %{key: k, value: v} -> {k, v} end)
 
     :ets.insert(@table, objects)
-  end
-
-  defp schedule_db_sync do
-    Logger.info("Scheduling sync")
-    Process.send_after(self(), :db_sync, @sync_interval)
   end
 end

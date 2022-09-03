@@ -5,15 +5,10 @@ defmodule IncrementerWeb.IncrementController do
 
   @doc false
   def increment(conn, params) do
-    with %{key: key, value: value} <- Params.validate(params),
-         :ok <- Incrementer.increment(key, value) do
+    with %{key: key, value: value} <- Params.validate(params) do
+      Incrementer.increment(key, value)
       send_resp(conn, 202, "")
     else
-      {:error, reason} ->
-        conn
-        |> put_status(400)
-        |> json(%{errors: [reason]})
-
       %{valid?: false, errors: errors} ->
         conn
         |> put_status(400)
