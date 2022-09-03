@@ -28,3 +28,7 @@ config :logger, level: :warn
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :incrementer, Incrementer.DBWorker,
+  max_updates: 5,
+  polling_time: 500

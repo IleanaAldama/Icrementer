@@ -1,10 +1,7 @@
 defmodule Incrementer do
   @moduledoc """
-  Incrementer keeps the contexts that define your domain
-  and business logic.
-
-  Contexts are also responsible for managing your data, regardless
-  if it comes from the database, an external API or others.
+  Incrementer implements a {key, value} storage/incremet making sure changes are equeue for
+  persistant storage in a database
   """
   alias Incrementer.{DBWorker, Repo}
   use GenServer
@@ -21,11 +18,30 @@ defmodule Incrementer do
     {:ok, [sync_needed: false]}
   end
 
+  @doc """
+   Increase the previously stored number associated with the key by the value ammount.
+   If the key is not found will be set equals to value.
+
+  ## Examples
+
+    iex> Incrementer.increment("key", 2) #Sets "key" as 2
+    :ok
+  """
+  @spec increment(key :: String.t(), value :: number) :: :ok
   def increment(key, value) do
     GenServer.cast(__MODULE__, {:increment, key, value})
     :ok
   end
 
+  @doc """
+    Returns the value associated with the key, if value is not found 0 is returned instead.
+
+  ## Examples
+
+    iex> Incrementer.lookup("key")
+    2
+  """
+  @spec lookup(key :: String.t()) :: number
   def lookup(key) do
     GenServer.call(__MODULE__, {:lookup, key})
   end
