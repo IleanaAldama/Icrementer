@@ -13,6 +13,7 @@ defmodule Incrementer.DBWorker do
   alias Incrementer.{Repo, Increment}
   use GenServer
   require Logger
+  @table :delta_table
 
   def start_link(options) do
     GenServer.start_link(__MODULE__, options, name: __MODULE__)
@@ -25,18 +26,17 @@ defmodule Incrementer.DBWorker do
       |> Application.get_env(__MODULE__)
       |> Keyword.merge(options)
 
+    :ets.new(@table, [:set, :private, :named_table])
     schedule_sync(config[:polling_time])
 
     {:ok,
      %{
        send_to: config[:send_to],
-       queue: %{},
        updates: 0,
        polling_time: config[:polling_time],
        max_updates: config[:max_updates]
      }}
   end
-
 
   @doc """
   Add a new change to the sync queue, value most be a tuple of the form {key, value}
@@ -49,7 +49,7 @@ defmodule Incrementer.DBWorker do
   @doc """
   Changes the callback module at runtime
   """
-  @spec register_callback(pid()):: term()
+  @spec register_callback(pid()) :: term()
   def register_callback(pid) do
     GenServer.cast(__MODULE__, {:callback, pid})
   end
@@ -61,15 +61,15 @@ defmodule Incrementer.DBWorker do
 
   @impl true
   def handle_cast({:enqueue, {key, value}}, state) do
-    queue = Map.put(state[:queue], key, value)
+    :ets.insert(@table, {key, value})
     updates = state[:updates] + 1
 
     state_delta =
       if updates > state[:max_updates] do
         sync(state)
-        %{queue: %{}, updates: 0}
+        %{updates: 0}
       else
-        %{queue: queue, updates: updates}
+        %{updates: updates}
       end
 
     {:noreply, Map.merge(state, state_delta)}
@@ -79,7 +79,7 @@ defmodule Incrementer.DBWorker do
   def handle_info(:timeout, state) do
     sync(state)
     schedule_sync(state[:polling_time])
-    {:noreply, Map.merge(state, %{queue: %{}, updates: 0})}
+    {:noreply, Map.merge(state, %{updates: 0})}
   end
 
   defp schedule_sync(timeout) do
@@ -91,10 +91,10 @@ defmodule Incrementer.DBWorker do
     :noop
   end
 
-  defp sync(%{queue: values, send_to: module}) do
+  defp sync(%{send_to: module}) do
     values =
-      values
-      |> Map.to_list()
+      @table
+      |> :ets.tab2list()
       |> Enum.map(fn {k, v} -> %{key: k, value: v} end)
 
     result =
@@ -103,6 +103,7 @@ defmodule Incrementer.DBWorker do
         conflict_target: :key
       )
 
+    :ets.delete_all_objects(@table)
     GenServer.cast(module, {:sync_db_done, result})
     result
   end

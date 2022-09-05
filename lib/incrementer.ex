@@ -53,9 +53,7 @@ defmodule Incrementer do
 
   @impl true
   def handle_cast({:increment, key, value}, state) do
-    new_value = value(key) + value
-
-    :ets.insert(@table, {key, new_value})
+    new_value = :ets.update_counter(@table, key, value, {key, 0})
     DBWorker.enqueue({key, new_value})
 
     {:noreply, state}

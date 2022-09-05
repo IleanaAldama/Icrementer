@@ -5,7 +5,7 @@ defmodule Incrementer.Increment do
   @primary_key {:key, :string, []}
 
   schema "increments" do
-    field :value, :float
+    field :value, :integer
   end
 
   @doc false

@@ -13,10 +13,11 @@ defmodule Incrementer.DBWorkerTest do
 
   describe "Db Worker" do
     test "it should enque and sync changes" do
-      DBWorker.enqueue({"key", 20.1})
-      DBWorker.enqueue({"key2", 12.0})
+      DBWorker.enqueue({"key", 20})
+      DBWorker.enqueue({"key2", 12})
 
-      assert %{queue: %{"key" => 20.1, "key2" => 12.0}} = :sys.get_state(DBWorker)
+      assert %{updates: val} = :sys.get_state(DBWorker)
+      assert  val > 0
       assert_receive {_, {:sync_db_done, _}}, 1000
     end
   end
