@@ -17,7 +17,7 @@ defmodule Incrementer.DBWorkerTest do
       DBWorker.enqueue({"key2", 12})
 
       assert %{updates: val} = :sys.get_state(DBWorker)
-      assert  val > 0
+      assert val > 0
       assert_receive {_, {:sync_db_done, _}}, 1000
     end
   end
