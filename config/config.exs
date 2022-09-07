@@ -27,7 +27,7 @@ config :incrementer, IncrementerWeb.Endpoint,
 config :incrementer, Incrementer.Mailer, adapter: Swoosh.Adapters.Local
 
 config :incrementer, Incrementer.DBWorker,
-  max_updates: 1000,
+  max_updates: 10_000,
   polling_time: 5_000
 
 # Swoosh API client is needed for adapters other than SMTP.
