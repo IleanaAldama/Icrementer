@@ -82,6 +82,8 @@ Data was collected from three runs using [WRK](https://github.com/wg/wrk) as the
 
 All the runs were made in the same machine a ryzen9 5950x with 64gb of ram.
 
+![](images/canvas.png)
+
 ```elixir
 results = [
   requests: [3456, 3283, 3369] ++ [3581, 3351, 3326] ++ [1553, 1480, 1596],
@@ -124,4 +126,3 @@ This can be seen in the profiling result showing that most of the time the code 
 ## Conclusions
 
 I enjoyed this excerise and learnt a about GenServers and ets, given more time I would like to explore horizontal scaling making sure this service can work with several intances running at the same time.
-

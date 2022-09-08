@@ -82,6 +82,8 @@ Data was collected from three runs using [WRK](https://github.com/wg/wrk) as the
 
 All the runs were made in the same machine a ryzen9 5950x with 64gb of ram.
 
+![](images/canvas.png)
+
 ```elixir
 results = [
   requests: [3456, 3283, 3369] ++ [3581, 3351, 3326] ++ [1553, 1480, 1596],
