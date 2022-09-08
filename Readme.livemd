@@ -124,4 +124,3 @@ This can be seen in the profiling result showing that most of the time the code 
 ## Conclusions
 
 I enjoyed this excerise and learnt a about GenServers and ets, given more time I would like to explore horizontal scaling making sure this service can work with several intances running at the same time.
-
